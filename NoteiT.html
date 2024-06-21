@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteiT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+    header h1 {
+      margin: 0;
+    }
+    nav {
+      display: flex;
+      gap: 10px;
+    }
+    nav button {
+      background-color: #ffffff;
+      border: 1px solid #007bff;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .container {
+      padding: 20px;
+    }
+    .editor {
+      width: 100%;
+      height: 300px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #f9f9f9;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+    .dropdown-content button {
+      color: black;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+    .dropdown-content button:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    .saved-notes {
+      margin-top: 20px;
+    }
+    .note-item {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 250px;
+    }
+    .note-item .note-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .note-item button {
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [note, setNote] = useState('');
+      const [fontFamily, setFontFamily] = useState('Arial');
+      const [color, setColor] = useState('black');
+      const [fontSize, setFontSize] = useState('16px');
+      const [notes, setNotes] = useState([]);
+      const [searchTerm, setSearchTerm] = useState('');
+      const [editIndex, setEditIndex] = useState(null);
+
+      useEffect(() => {
+        const savedNotes = JSON.parse(localStorage.getItem('notes')) || [];
+        setNotes(savedNotes);
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('notes', JSON.stringify(notes));
+      }, [notes]);
+
+      const handleNoteChange = (event) => {
+        setNote(event.target.value);
+      };
+
+      const handleFontChange = (font) => {
+        setFontFamily(font);
+      };
+
+      const handleColorChange = (color) => {
+        setColor(color);
+      };
+
+      const handleFontSizeChange = (size) => {
+        setFontSize(size);
+      };
+
+      const handleSave = () => {
+        const noteTitle = prompt('Enter note title:');
+        if (noteTitle) {
+          const newNote = { title: noteTitle, content: note, fontFamily, color, fontSize };
+          if (editIndex !== null) {
+            const updatedNotes = notes.map((n, index) => (index === editIndex ? newNote : n));
+            setNotes(updatedNotes);
+            setEditIndex(null);
+          } else {
+            setNotes([...notes, newNote]);
+          }
+          setNote('');
+        }
+      };
+
+      const handleSearch = () => {
+        const term = prompt('Enter search term:');
+        setSearchTerm(term || '');
+      };
+
+      const handleEdit = (index) => {
+        const noteToEdit = notes[index];
+        setNote(noteToEdit.content);
+        setFontFamily(noteToEdit.fontFamily);
+        setColor(noteToEdit.color);
+        setFontSize(noteToEdit.fontSize);
+        setEditIndex(index);
+      };
+
+      const handleDelete = (index) => {
+        const updatedNotes = notes.filter((_, i) => i !== index);
+        setNotes(updatedNotes);
+      };
+
+      const filteredNotes = notes.filter(note => 
+        note.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      return (
+        <div>
+          <header>
+            <h1>NoteiT</h1>
+            <nav>
+              <button onClick={() => setNote('')}>New Doc</button>
+              <button onClick={handleSave}>Save</button>
+              <button onClick={handleSearch}>Search</button>
+              <div className="dropdown">
+                <button>Font</button>
+                <div className="dropdown-content">
+                  <button onClick={() => handleFontChange('Arial')}>Arial</button>
+                  <button onClick={() => handleFontChange('Courier New')}>Courier New</button>
+                  <button onClick={() => handleFontChange('Times New Roman')}>Times New Roman</button>
+                  <button onClick={() => handleFontChange('Georgia')}>Georgia</button>
+                  <button onClick={() => handleFontChange('Verdana')}>Verdana</button>
+                </div>
+              </div>
+              <div className="dropdown">
+                <button>Color</button>
+                <div className="dropdown-content">
+                  <button onClick={() => handleColorChange('black')}>Black</button>
+                  <button onClick={() => handleColorChange('red')}>Red</button>
+                  <button onClick={() => handleColorChange('blue')}>Blue</button>
+                  <button onClick={() => handleColorChange('green')}>Green</button>
+                  <button onClick={() => handleColorChange('purple')}>Purple</button>
+                </div>
+              </div>
+              <div className="dropdown">
+                <button>Size</button>
+                <div className="dropdown-content">
+                  <button onClick={() => handleFontSizeChange('12px')}>12px</button>
+                  <button onClick={() => handleFontSizeChange('16px')}>16px</button>
+                  <button onClick={() => handleFontSizeChange('20px')}>20px</button>
+                  <button onClick={() => handleFontSizeChange('24px')}>24px</button>
+                </div>
+              </div>
+            </nav>
+          </header>
+          <div className="container">
+            <textarea
+              className="editor"
+              style={{ fontFamily, color, fontSize }}
+              value={note}
+              onChange={handleNoteChange}
+            />
+            <div className="saved-notes">
+              {filteredNotes.map((savedNote, index) => (
+                <div 
+                  key={index} 
+                  className="note-item" 
+                  style={{ fontFamily: savedNote.fontFamily, color: savedNote.color, fontSize: savedNote.fontSize }}
+                >
+                  <span>{savedNote.title}</span>
+                  <div className="note-actions">
+                    <button onClick={() => handleEdit(index)}>✏️</button>
+                    <button onClick={() => handleDelete(index)}>🗑️</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
